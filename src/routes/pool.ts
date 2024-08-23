@@ -4,19 +4,17 @@ import {initSdk} from "../config";
 const axios = require('axios');
 
 const router = new Router();
-
 // 获取池子信息 by Raydium Server
-router.get('/pool/:poolId', async (ctx) => {
+router.get('/:poolId', async (ctx) => {
     const raydium = await initSdk();
     const {poolId} = ctx.params;
     console.log(`poolId: ${poolId}`)
     const data = await raydium.api.fetchPoolById({ids: poolId})
-    console.log(`pool: ${data}`)
+    // console.log(`pool: ${data}`)
     ctx.body = data;
 })
 
-
-// 获取池子创世信息
+// 获取池子创世信息,By 区块浏览器爬虫
 router.get('/create_info/:poolId', async (ctx) => {
     const {poolId} = ctx.params;
     console.log(`poolId: ${poolId}`);

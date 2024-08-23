@@ -1,15 +1,14 @@
 // noinspection SpellCheckingInspection
 
 import Router from 'koa-router';
-import {sendErrorResponse} from '../utils/response';
+import {sendErrorResponse} from '../helpers/response';
 import {initSdk} from '../config'
 import {parseTokenAccountResp, Raydium} from "@raydium-io/raydium-sdk-v2";
 import {PublicKey} from "@solana/web3.js"
 import {TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID} from '@solana/spl-token'
-import {convertData} from "../utils/util";
+import {convertData} from "../helpers/util";
 
 const router = new Router();
-
 
 // 获取当前钱包的地址
 router.get('/mywallet', async (ctx) => {
@@ -84,7 +83,5 @@ router.get('/asset', async (ctx) => {
         sendErrorResponse(ctx, 500, e);
     }
 })
-
-
 
 export default router;

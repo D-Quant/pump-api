@@ -3,7 +3,7 @@
 import {Raydium, TxVersion} from '@raydium-io/raydium-sdk-v2'
 import {Connection, Keypair} from '@solana/web3.js'
 import bs58 from 'bs58'
-import {DefaultTransactionExecutorV2} from "./utils/default-transaction-executorV2";
+import {DefaultTransactionExecutorV2} from "./helpers/default-transaction-executorV2";
 
 const walletSecretKey = process.argv[2];
 const rpcUrl = process.argv[3];
