@@ -28,7 +28,7 @@ router.get('/', async (ctx) => {
 
 // 加载模块路由
 router.use('/account', accountRouter.routes(), accountRouter.allowedMethods());
-router.use('/core', poolRouter.routes(), poolRouter.allowedMethods());
+router.use('/pool', poolRouter.routes(), poolRouter.allowedMethods());
 router.use('/trade', tradeRouter.routes(), tradeRouter.allowedMethods());
 
 // 使用主路由

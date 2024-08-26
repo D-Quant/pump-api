@@ -64,7 +64,7 @@ export class PumpEngine {
 
     //买入操作
     public async buy(mint: PublicKey,
-                     sellAmount: string,
+                     buyAmount: string,
                      executor: string,
                      unitPrice: number = 13646642,
                      unitLimit: number = 66000,
@@ -77,6 +77,7 @@ export class PumpEngine {
             buyAmountSol,
             slippageBasisPoints
         );
+
         const associatedBondingCurve = await getAssociatedTokenAddress(
             mint,
             this.getBondingCurvePDA(mint),
@@ -92,6 +93,7 @@ export class PumpEngine {
             new PublicKey(this.program.programId)
         );
         let instructions = [];
+        const bondingCurve = this.getBondingCurvePDA(mint);
 
         let buyInstruction = await this.program.methods
             .buy(
@@ -274,7 +276,7 @@ export class PumpEngine {
         return result;
     }
 
-    getBondingCurvePDA(mint: PublicKey):PublicKey {
+    private getBondingCurvePDA(mint: PublicKey): PublicKey {
         return PublicKey.findProgramAddressSync(
             [Buffer.from(BONDING_CURVE_SEED), mint.toBuffer()],
             this.program.programId
@@ -282,7 +284,7 @@ export class PumpEngine {
     }
 
 
-    async getGlobalAccount(commitment: Commitment = COMMITMENT_LEVEL) {
+    private async getGlobalAccount(commitment: Commitment = COMMITMENT_LEVEL) {
         const [globalAccountPDA] = PublicKey.findProgramAddressSync(
             [Buffer.from(GLOBAL_ACCOUNT_SEED)],
             new PublicKey(PROGRAM_ID)
@@ -296,7 +298,13 @@ export class PumpEngine {
         return GlobalAccount.fromBuffer(tokenAccount!.data);
     }
 
-    async getBondingCurveAccount(bondingCurve: PublicKey) {
+    public async getPoolInfo(mint_pk: string) {
+        const mint = new PublicKey(mint_pk)
+        const bondingCurve = this.getBondingCurvePDA(mint);
+        return await this.getBondingCurveAccount(bondingCurve);
+    }
+
+    private async getBondingCurveAccount(bondingCurve: PublicKey) {
         const tokenAccount = await this.provider.connection.getAccountInfo(
             bondingCurve,
             COMMITMENT_LEVEL
@@ -308,7 +316,7 @@ export class PumpEngine {
     }
 
     // 选择交易执行器
-    switchTxExecutor(executor: string | undefined, custom_fee: string = "0.000995"): TransactionExecutor {
+    private switchTxExecutor(executor: string | undefined, custom_fee: string = "0.000995"): TransactionExecutor {
         let txExecutor: TransactionExecutor;
 
         switch (executor) {

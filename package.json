@@ -1,8 +1,9 @@
 {
   "dependencies": {
     "@coral-xyz/anchor": "0.29.0",
-    "@raydium-io/raydium-sdk-v2": "^0.1.35-alpha",
     "@solana/spl-token": "^0.4.6",
+    "@solana/web3.js": "^1.95.3",
+    "axios": "^1.7.2",
     "bn.js": "^5.2.1",
     "bs58": "^6.0.0",
     "decimal.js": "^10.4.3",
