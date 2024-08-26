@@ -88,12 +88,13 @@ router.get('/token_balance', async (ctx) => {
         }
         let tokenAccountParsed = acc.value[0];
         const data = tokenAccountParsed.account.data.parsed.info;
+        // ctx.body=data
 
         ctx.body = {
-            "isNative": false,
-            "mint": input_mint,
-            "owner": target.toString(),
-            "state": "initialized",
+            "isNative": data['isNative'],
+            "mint": data["mint"],
+            "owner": data['owner'],
+            "state": data['state'],
             "amount": data['tokenAmount']['amount'],
             "decimals": data['tokenAmount']['decimals'],
             "uiAmount": data['tokenAmount']['uiAmount'],
