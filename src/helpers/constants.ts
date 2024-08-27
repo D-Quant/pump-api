@@ -9,6 +9,7 @@
 //   }
 //   return variable;
 // };
+// noinspection SpellCheckingInspection
 
 
 import {Commitment} from "@solana/web3.js";
@@ -26,9 +27,3 @@ export const GLOBAL_ACCOUNT_SEED = "global";
 export const MINT_AUTHORITY_SEED = "mint-authority";
 export const BONDING_CURVE_SEED = "bonding-curve";
 export const METADATA_SEED = "metadata";
-
-// Buy
-
-// Sell
-
-// Filters

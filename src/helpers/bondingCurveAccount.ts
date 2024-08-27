@@ -26,8 +26,8 @@ export class BondingCurveAccount {
     this.tokenTotalSupply = tokenTotalSupply;
     this.complete = complete;
   }
-
-  getBuyPrice(amount: bigint): bigint {
+  //calSolToTokenAmount
+  calSol2TokenAmount(amount: bigint): bigint {
     if (this.complete) {
       throw new Error("Curve is complete");
     }
@@ -51,8 +51,8 @@ export class BondingCurveAccount {
     // Return the minimum of the calculated tokens and real token reserves
     return s < this.realTokenReserves ? s : this.realTokenReserves;
   }
-
-  getSellPrice(amount: bigint, feeBasisPoints: bigint): bigint {
+  // calTokenToSolAmount
+  calToken2SolAmount(amount: bigint, feeBasisPoints: bigint): bigint {
     if (this.complete) {
       throw new Error("Curve is complete");
     }
