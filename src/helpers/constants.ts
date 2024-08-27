@@ -1,17 +1,3 @@
-//
-// dotenv.config();
-//
-// const retrieveEnvVariable = (variableName: string, logger: Logger) => {
-//   const variable = process.env[variableName] || '';
-//   if (!variable) {
-//     logger.error(`${variableName} is not set`);
-//     process.exit(1);
-//   }
-//   return variable;
-// };
-// noinspection SpellCheckingInspection
-
-
 import {Commitment} from "@solana/web3.js";
 
 export const PROGRAM_ID = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
