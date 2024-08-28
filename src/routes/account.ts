@@ -4,7 +4,7 @@ import Router from 'koa-router';
 import {sendErrorResponse} from '../helpers/response';
 import {connection, owner} from "../config";
 import {LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
-import {getAccount, getAssociatedTokenAddress} from '@solana/spl-token';
+import {AccountLayout, getAccount, getAssociatedTokenAddress, RawAccount, TOKEN_PROGRAM_ID} from '@solana/spl-token';
 
 const router = new Router();
 
@@ -104,6 +104,48 @@ router.get('/token_balance', async (ctx) => {
         sendErrorResponse(ctx, 500, e)
     }
 })
+// 查询本钱包下所有的token信息
+router.get('/tokens', async (ctx) => {
+    const input_owner = ctx.query.owner;
+    try {
+        const target: PublicKey = input_owner ? new PublicKey(input_owner) : owner.publicKey;
+        const tokenAccounts = await connection.getTokenAccountsByOwner(target, {
+            programId: TOKEN_PROGRAM_ID,
+        });
+        let tokens = [];
+        for (const tokenAccount of tokenAccounts.value) {
+            const accountInfo = await connection.getAccountInfo(tokenAccount.pubkey);
+            if (accountInfo && accountInfo.data.length === AccountLayout.span) {
+                const parsedData: RawAccount = AccountLayout.decode(accountInfo.data);
+                const token = {
+                    'mint': parsedData.mint.toString(),
+                    'owner': parsedData.owner.toString(),
+                    'amount': parsedData.amount.toString(),
+                    'delegateOption': parsedData.delegateOption,
+                    'delegate': parsedData.delegate.toString(),
+                    'state': parsedData.state,
+                    'isNativeOption': parsedData.isNativeOption,
+                    'isNative': parsedData.isNative.toString(),
+                    'closeAuthorityOption': parsedData.closeAuthorityOption,
+                    'closeAuthority': parsedData.closeAuthorityOption.toString(),
 
+                }
+                tokens.push(token);
+            }
+        }
+        ctx.body = tokens;
+    } catch (e) {
+        sendErrorResponse(ctx, 503, e)
+        return
+    }
+
+
+})
+
+// 关闭账户
+router.put('close_account', async (ctx) => {
+    //todo 构建交易并关闭Token账户，将租金退回到所有者账户
+    sendErrorResponse(ctx, 501, "This function is not implemented ")
+})
 
 export default router;
