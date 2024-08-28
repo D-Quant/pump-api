@@ -143,7 +143,7 @@ router.get('/tokens', async (ctx) => {
 })
 
 // 关闭账户
-router.put('close_account', async (ctx) => {
+router.put('/close', async (ctx) => {
     //todo 构建交易并关闭Token账户，将租金退回到所有者账户
     sendErrorResponse(ctx, 501, "This function is not implemented ")
 })
