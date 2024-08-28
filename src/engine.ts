@@ -13,7 +13,13 @@ import {
 } from "@solana/web3.js";
 import {genKeyPair} from "./helpers/wallet_help";
 import {PumpFun, PumpFunIdl} from "./constants/idl";
-import {ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_ID,} from "@solana/spl-token";
+import {
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    createAssociatedTokenAccountInstruction,
+    getAccount,
+    getAssociatedTokenAddress,
+    TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import {
     BONDING_CURVE_SEED,
     BondingCurveAccount,
@@ -27,9 +33,9 @@ import {
     PROGRAM_ID,
 } from "./helpers";
 
-import {TransactionExecutor} from "./transactions/transaction-executor.interface";
-import {JitoTransactionExecutor} from "./transactions/jito-rpc-transaction-executor";
-import {DefaultTransactionExecutorV2} from "./transactions/default-transaction-executorV2";
+import {TransactionExecutor} from "./executor/transaction-executor.interface";
+import {JitoTransactionExecutor} from "./executor/jito-rpc-transaction-executor";
+import {DefaultTransactionExecutorV2} from "./executor/default-transaction-executorV2";
 
 export class PumpEngine {
     private readonly program: Program<PumpFun>;
@@ -115,13 +121,24 @@ export class PumpEngine {
         );
         logger.info(`buyAmountSol:${buyAmountSol} buyAmount:${buyAmount} slippageBasisPoints:${slippageBasisPoints} maxSolCost:${maxSolCost}`);
 
-        // 2842145.662132
-        // 13433344.537188
-        // 0.499522221
         const associatedBondingCurve = await getAssociatedTokenAddress(mint, this.getBondingCurvePDA(mint), true);
         const associatedUser = await getAssociatedTokenAddress(mint, this.wallet.publicKey, false);
         const [globalAccountPDA] = PublicKey.findProgramAddressSync([Buffer.from(GLOBAL_ACCOUNT_SEED)], new PublicKey(this.program.programId));
+        let instructions = [];
 
+        // 买入时，需要一个token的账户，如果没有就要创建，有的就不用了
+        try {
+            await getAccount(this.connection, associatedUser, "confirmed");
+        } catch (e) {
+            instructions.push(
+                createAssociatedTokenAccountInstruction(
+                    this.wallet.publicKey,
+                    associatedUser,
+                    this.wallet.publicKey,
+                    mint
+                )
+            );
+        }
         // 构建买入指令
         let buyInstruction = await this.program.methods
             .buy(
@@ -142,10 +159,11 @@ export class PumpEngine {
             })
             .signers([this.wallet.payer])
             .instruction();
+        // 在指令集中添加买入指令
+        instructions.push(buyInstruction);
 
         // 交易参数：最近哈希
         const latestBlockhash = await this.connection.getLatestBlockhash();
-        // 判断是否采用jito交易
 
         // 构建交易消息
         let messageV0 = new TransactionMessage({
@@ -153,7 +171,8 @@ export class PumpEngine {
             recentBlockhash: latestBlockhash.blockhash,
             instructions: [
                 ...(jito ? [] : this.genDefaultUnit(unitPrice, unitLimit)),
-                buyInstruction
+
+                ...instructions
             ],
         }).compileToV0Message();
 
@@ -165,35 +184,19 @@ export class PumpEngine {
         const exec = this.switchTxExecutor(jito, custom_fee);
         // 处理结果
 
-        const result = await exec.executeAndConfirm(
+        return await exec.executeAndConfirm(
             transaction,
             this.wallet.payer,
             latestBlockhash
         );
-
-        if (result.confirmed) {
-            logger.info(
-                {
-                    mint: mint.toString(),
-                    signature: result.signature,
-                    url: `https://solscan.io/tx/${result.signature}?cluster=${NETWORK}`,
-                },
-                `Confirmed buy tx,${+new Date()}`
-            );
-        } else {
-            logger.info(
-                {
-                    mint: mint.toString(),
-                    signature: result.signature,
-                    error: result.error,
-                },
-                `Error confirming buy tx`
-            );
-        }
-        return result;
     }
 
-    // 生成默认gas费设置指令集合
+    /**
+     * 生成默认gas费设置指令集合
+     * @param unitPrice 计算单元价格
+     * @param unitLimit 申请计算单元上限
+     * @private
+     */
     private genDefaultUnit(unitPrice: number, unitLimit: number): [TransactionInstruction, TransactionInstruction] {
         return [
             ComputeBudgetProgram.setComputeUnitPrice({
@@ -205,14 +208,13 @@ export class PumpEngine {
         ]
     }
 
-    // 卖出操作
     /**
-     *
+     * 卖出操作
      * @param mint_pk PUMP 代币mint地址
      * @param token_input 输入代币数量，例如0.1,内部进行精度转化
      * @param unitPrice 计算单元价格
      * @param unitLimit 计算单元限制
-     * @param jito
+     * @param jito 是否使用jito客户端
      * @param custom_fee 如果采用jito则采用自定义手续费
      */
     public async sell(mint_pk: string,
@@ -269,6 +271,7 @@ export class PumpEngine {
             instructions: [
                 ...(jito ? [] : this.genDefaultUnit(unitPrice, unitLimit)),
                 sellInstruction,
+                //todo 可能需要添加关闭账户的指令集
             ],
         }).compileToV0Message();
 
